@@ -5,7 +5,7 @@
 
 using namespace std;
 
-const int SIZE = 7;
+const int SIZE = 13; // Number of vertices in the graph
 
 struct Edge {
     int src, dest, weight;
@@ -98,7 +98,8 @@ public:
 
 int main() {
     vector<Edge> edges = {
-        {0,2,8},{2,6,2},{5,6,6},{4,5,9},{2,4,4},{2,5,5}
+        {0,2,8}, {2,6,2}, {5,6,6}, {4,5,9}, {2,4,4}, {2,5,5}, {0, 7, 4}, {7, 8, 6},
+        {8, 9, 11}, {9, 10, 2}, {10, 11, 8}, {11, 12, 14}, {12, 6, 3}, {8, 4, 1}
     };
 
     Graph graph(edges);
