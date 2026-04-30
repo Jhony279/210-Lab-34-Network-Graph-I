@@ -2,53 +2,70 @@
 #include <vector>
 #include <queue>
 #include <stack>
+#include <string>
+#include <map>
 
 using namespace std;
 
-const int SIZE = 13; // Number of vertices in the graph
+const int SIZE = 13; // Number of UWB anchor nodes in the mapping grid
 
-struct Edge {
-    int src, dest, weight;
+// Structure representing a physical path between two UWB anchors
+struct Path {
+    int src, dest, distance;
 };
 
 typedef pair<int, int> Pair;
 
-class Graph {
+class AutonomousNavGraph {
 public:
     vector<vector<Pair>> adjList;
+    map<int, string> locationNames;
 
-    Graph(vector<Edge> const &edges) {
+    AutonomousNavGraph(vector<Path> const &paths) {
         adjList.resize(SIZE);
-        for (auto &edge: edges) {
-            int src = edge.src;
-            int dest = edge.dest;
-            int weight = edge.weight;
+        
+        // Add edges (navigable physical routes) to the graph
+        for (auto &path: paths) {
+            int src = path.src;
+            int dest = path.dest;
+            int distance = path.distance;
 
-            adjList[src].push_back(make_pair(dest, weight));
-            adjList[dest].push_back(make_pair(src, weight));
+            adjList[src].push_back(make_pair(dest, distance));
+            adjList[dest].push_back(make_pair(src, distance));
         }
+
+        // Mapping vertex IDs to real-world locations in the environment
+        locationNames[0] = "Charging Base";
+        locationNames[2] = "Living Room Center";
+        locationNames[4] = "Kitchen Entry";
+        locationNames[5] = "Feeding Station";
+        locationNames[6] = "Lounge Area";
+        locationNames[7] = "Hallway North";
+        locationNames[8] = "Bedroom Door";
+        locationNames[9] = "Under-Bed Zone";
+        locationNames[10] = "Walk-in Closet";
+        locationNames[11] = "Hallway South";
+        locationNames[12] = "Patio Door";
+        // Note: Nodes 1 and 3 are offline or removed from the system.
     }
 
-    // Depth First Search using a Stack
-    void DFS(int startVertex) {
+    // Depth First Search: Useful for deep mapping/exploration of dead-end rooms
+    void exploreAreaDFS(int startVertex) {
         vector<bool> visited(SIZE, false);
         stack<int> s;
 
         s.push(startVertex);
 
-        cout << "DFS starting from vertex " << startVertex << ":" << endl;
+        cout << "\n[Exploration Mode] DFS route starting from " << locationNames[startVertex] << ":" << endl;
 
         while (!s.empty()) {
             int curr = s.top();
             s.pop();
 
-            // Only print and process if the node hasn't been visited yet
-            if (!visited[curr]) {
-                cout << curr << " ";
+            if (!visited[curr] && locationNames.count(curr)) {
+                cout << " -> " << locationNames[curr] << " (ID: " << curr << ")" << endl;
                 visited[curr] = true;
 
-                // Push neighbors to stack in standard forward order. 
-                // This puts the last connected node on top of the stack.
                 for (Pair neighbor : adjList[curr]) {
                     if (!visited[neighbor.first]) {
                         s.push(neighbor.first);
@@ -56,25 +73,26 @@ public:
                 }
             }
         }
-        cout << endl;
     }
 
-    // Breadth First Search using a Queue
-    void BFS(int startVertex) {
+    // Breadth First Search: Useful for finding the path with the fewest anchor hops
+    void shortestHopsBFS(int startVertex) {
         vector<bool> visited(SIZE, false);
         queue<int> q;
 
         visited[startVertex] = true;
         q.push(startVertex);
 
-        cout << "BFS starting from vertex " << startVertex << ":" << endl;
+        cout << "\n[Fewest Hops Routing] BFS broadcast starting from " << locationNames[startVertex] << ":" << endl;
 
         while (!q.empty()) {
             int curr = q.front();
             q.pop();
-            cout << curr << " ";
+            
+            if(locationNames.count(curr)) {
+                cout << " -> Checked " << locationNames[curr] << " (ID: " << curr << ")" << endl;
+            }
 
-            // Push neighbors to the back of the queue
             for (Pair neighbor : adjList[curr]) {
                 if (!visited[neighbor.first]) {
                     visited[neighbor.first] = true;
@@ -82,33 +100,38 @@ public:
                 }
             }
         }
-        cout << endl;
     }
 
-    void printGraph() {
-        cout << "\nGraph's adjacency list:" << endl;
+    void printNetwork() {
+        cout << "\n--- UWB Anchor Navigational Network ---" << endl;
         for (int i = 0; i < adjList.size(); i++) {
-            cout << i << " --> ";
-            for (Pair v : adjList[i])
-                cout << "(" << v.first << ", " << v.second << ") ";
-            cout << endl;
+            if (adjList[i].empty()) continue; // Skip offline nodes
+
+            cout << "[" << locationNames[i] << "] connects to:" << endl;
+            for (Pair v : adjList[i]) {
+                cout << "    - " << locationNames[v.first] << " (Distance: " << v.second << " dm)" << endl;
+            }
         }
     }
 };
 
 int main() {
-    vector<Edge> edges = {
-        {0,2,8}, {2,6,2}, {5,6,6}, {4,5,9}, {2,4,4}, {2,5,5}, {0, 7, 4}, {7, 8, 6},
-        {8, 9, 11}, {9, 10, 2}, {10, 11, 8}, {11, 12, 14}, {12, 6, 3}, {8, 4, 1}
+    // Navigable paths between UWB anchors and their physical distances
+    vector<Path> paths = {
+        {0, 2, 8}, {2, 6, 2}, {5, 6, 6}, {4, 5, 9}, {2, 4, 4}, {2, 5, 5}, 
+        {0, 7, 4}, {7, 8, 6}, {8, 9, 11}, {9, 10, 2}, {10, 11, 8}, {11, 12, 14}, 
+        {12, 6, 3}, {8, 4, 1}
     };
 
-    Graph graph(edges);
+    // Initialize the navigation system
+    AutonomousNavGraph navSystem(paths);
 
-    graph.printGraph();
+    // Display the network layout
+    navSystem.printNetwork();
     
-    // Executes the traversal algorithms
-    graph.DFS(0);
-    graph.BFS(0);
+    // Run the routing simulations
+    navSystem.exploreAreaDFS(0);
+    navSystem.shortestHopsBFS(0);
 
     return 0;
 }
