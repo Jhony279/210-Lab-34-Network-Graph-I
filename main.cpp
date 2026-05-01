@@ -8,7 +8,7 @@
 
 using namespace std;
 
-// The total number of possible UWB anchor nodes in our mapping grid (Nodes 0 through 12)
+// The total number of possible UWB anchor nodes in our mapping grid
 const int SIZE = 13; 
 
 // Structure representing a physical, navigable path between two UWB anchors
@@ -22,10 +22,10 @@ typedef pair<int, int> Pair;
 class AutonomousNavGraph {
 public:
     // Adjacency list representation of the graph. 
-    // Each index represents a node, and holds a list of (connected node, distance) pairs.
+    // Each index represents a node, and holds a list of (connected node, distance) pairs
     vector<vector<Pair>> adjList;
     
-    // A dictionary (map) to translate raw node IDs (e.g., 0, 2) into human-readable room names
+    // A dictionary (map) to translate raw node IDs into human-readable room names
     map<int, string> locationNames;
 
     // Constructor: Builds the graph when the object is created
@@ -57,18 +57,19 @@ public:
         locationNames[10] = "Walk-in Closet";
         locationNames[11] = "Hallway South";
         locationNames[12] = "Patio Door";
-        // Note: Nodes 1 and 3 are intentionally left unmapped (simulating offline nodes)
+        // Nodes 1 and 3 are intentionally left unmapped (simulating offline nodes)
     }
 
     void exploreAreaDFS(int startVertex) {
-        // Keep track of which locations we've already visited to prevent infinite loops
+        // Keep track of visited locations to prevent infinite loops
         vector<bool> visited(SIZE, false);
         stack<int> s;
 
         // Push the starting location onto the stack
         s.push(startVertex);
 
-        cout << "\n[Exploration Mode] DFS route starting from " << locationNames[startVertex] << ":" << endl;
+        cout << "\n[Exploration Mode] DFS route starting from " 
+            << locationNames[startVertex] << ":" << endl;
 
         // Continue exploring as long as there are nodes in the stack
         while (!s.empty()) {
@@ -79,12 +80,13 @@ public:
             // If we haven't visited this node, and it's a valid mapped location:
             if (!visited[curr] && locationNames.count(curr)) {
                 // Mark it as visited and print the location
-                cout << " -> " << locationNames[curr] << " (ID: " << curr << ")" << endl;
+                cout << " -> " << locationNames[curr] << " (ID: " << curr << ")" 
+                    << endl;
                 visited[curr] = true;
 
                 // Look at all neighboring anchors connected to our current location
                 for (Pair neighbor : adjList[curr]) {
-                    // If we haven't visited the neighbor, add it to the stack to explore later
+                    // If we haven't visited the neighbor, add it to the stack
                     if (!visited[neighbor.first]) {
                         s.push(neighbor.first);
                     }
@@ -102,7 +104,8 @@ public:
         visited[startVertex] = true;
         q.push(startVertex);
 
-        cout << "\n[Fewest Hops Routing] BFS broadcast starting from " << locationNames[startVertex] << ":" << endl;
+        cout << "\n[Fewest Hops Routing] BFS broadcast starting from " 
+            << locationNames[startVertex] << ":" << endl;
 
         // Continue exploring as long as there are nodes in the queue
         while (!q.empty()) {
@@ -112,12 +115,13 @@ public:
             
             // Print the location being checked
             if(locationNames.count(curr)) {
-                cout << " -> Checked " << locationNames[curr] << " (ID: " << curr << ")" << endl;
+                cout << " -> Checked " << locationNames[curr] << " (ID: " << curr 
+                    << ")" << endl;
             }
 
             // Look at all neighboring anchors connected to our current location
             for (Pair neighbor : adjList[curr]) {
-                // If we haven't visited the neighbor, mark it visited immediately and queue it up
+                // If we haven't visited the neighbor, mark it visited and queue it up
                 if (!visited[neighbor.first]) {
                     visited[neighbor.first] = true;
                     q.push(neighbor.first);
@@ -137,7 +141,8 @@ public:
             cout << "[" << locationNames[i] << "] connects to:" << endl;
             // Loop through and print all the connected neighbors and their distances
             for (Pair v : adjList[i]) {
-                cout << "    - " << locationNames[v.first] << " (Distance: " << v.second << " dm)" << endl;
+                cout << "    - " << locationNames[v.first] << " (Distance: " 
+                    << v.second << " dm)" << endl;
             }
         }
     }
@@ -231,28 +236,78 @@ public:
 };
 
 int main() {
-    // Define the navigable physical paths between UWB anchors and their physical distances (in decimeters)
+    // Define the physical paths & distances (in units)
     vector<Path> paths = {
         {0, 2, 8}, {2, 6, 2}, {5, 6, 6}, {4, 5, 9}, {2, 4, 4}, {2, 5, 5}, 
         {0, 7, 4}, {7, 8, 6}, {8, 9, 11}, {9, 10, 2}, {10, 11, 8}, {11, 12, 14}, 
         {12, 6, 3}, {8, 4, 1}
     };
 
-    // Initialize the navigation system, passing in our physical layout
+    // Initialize the navigation/distribution system
     AutonomousNavGraph navSystem(paths);
 
-    // Display the network layout and all connections
-    navSystem.printNetwork();
-    
-    // Run the routing simulations to demonstrate DFS and BFS
-    navSystem.exploreAreaDFS(0);
-    navSystem.shortestHopsBFS(0);
+    int choice;
+    int startNode;
 
-    // Finally, calculate and display the shortest paths from the charging base (node 0) to all other nodes
-    navSystem.findShortestPathsFromSource(0);
+    do {
+        // Display the interactive menu formatted exactly like the sample output
+        cout << "\nWater Distribution Network Menu:" << endl;
+        cout << "[1] Display water distribution network" << endl;
+        cout << "[2] Check contaminant spread (BFS)" << endl;
+        cout << "[3] Plan inspection route  (DFS)" << endl;
+        cout << "[4] Calculate shortest paths" << endl;
+        cout << "[5] Find Minimum Spanning Tree" << endl;
+        cout << "[0] Exit" << endl;
+        cout << "Enter your choice: ";
+        
+        // Take user input
+        cin >> choice;
 
-    // Calculate and display the Minimum Spanning Tree to show the optimal backbone of our network
-    navSystem.calculateMST();
+        // Execute the chosen functionality based on the new numbering
+        switch (choice) {
+            case 1:
+                navSystem.printNetwork();
+                break;
+            case 2: // BFS is now option 2
+                cout << "Enter starting node ID: ";
+                cin >> startNode;
+                if (navSystem.locationNames.count(startNode)) {
+                    navSystem.shortestHopsBFS(startNode);
+                } else {
+                    cout << "Error: Invalid or unmapped node ID." << endl;
+                }
+                break;
+            case 3: // DFS is now option 3
+                cout << "Enter starting node ID: ";
+                cin >> startNode;
+                if (navSystem.locationNames.count(startNode)) {
+                    navSystem.exploreAreaDFS(startNode);
+                } else {
+                    cout << "Error: Invalid or unmapped node ID." << endl;
+                }
+                break;
+            case 4:
+                cout << "Enter starting node ID: ";
+                cin >> startNode;
+                if (navSystem.locationNames.count(startNode)) {
+                    navSystem.findShortestPathsFromSource(startNode);
+                } else {
+                    cout << "Error: Invalid or unmapped node ID." << endl;
+                }
+                break;
+            case 5:
+                navSystem.calculateMST();
+                break;
+            case 0: // Exit is now option 0
+                break;
+            default:
+                cout << "\nInvalid choice. Please enter a valid number." << endl;
+                // Clear the input buffer in case the user entered a non-integer
+                cin.clear();
+                cin.ignore(10000, '\n');
+                break;
+        }
+    } while (choice != 0); // Loop until user enters 0
 
     return 0;
 }
