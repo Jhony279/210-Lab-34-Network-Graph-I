@@ -4,6 +4,7 @@
 #include <stack>
 #include <string>
 #include <map>
+#include <climits>
 
 using namespace std;
 
@@ -140,6 +141,48 @@ public:
             }
         }
     }
+
+    void findShortestPathsFromSource(int startNode) {
+        // Distance array initialized to infinity
+        vector<int> dist(SIZE, INT_MAX);
+        // Priority queue to store (distance, node ID)
+        priority_queue<Pair, vector<Pair>, greater<Pair>> pq;
+
+        dist[startNode] = 0;
+        pq.push(make_pair(0, startNode));
+
+        while (!pq.empty()) {
+            int d = pq.top().first;
+            int u = pq.top().second;
+            pq.pop();
+
+            // If we found a longer path already, skip it
+            if (d > dist[u]) continue;
+
+            for (auto &edge : adjList[u]) {
+                int v = edge.first;
+                int weight = edge.second;
+
+                if (dist[u] + weight < dist[v]) {
+                    dist[v] = dist[u] + weight;
+                    pq.push(make_pair(dist[v], v));
+                }
+            }
+        }
+
+        // Output formatted to match your reference image
+        cout << "\nShortest path from node " << startNode << ":" << endl;
+        for (int i = 0; i < SIZE; i++) {
+            // Only print nodes that are actually part of our location map
+            if (locationNames.count(i)) {
+                if (dist[i] == INT_MAX) {
+                    cout << startNode << " -> " << i << " : INF" << endl;
+                } else {
+                    cout << startNode << " -> " << i << " : " << dist[i] << endl;
+                }
+            }
+        }
+    }
 };
 
 int main() {
@@ -159,6 +202,9 @@ int main() {
     // Run the routing simulations to demonstrate DFS and BFS
     navSystem.exploreAreaDFS(0);
     navSystem.shortestHopsBFS(0);
+
+    // Finally, calculate and display the shortest paths from the charging base (node 0) to all other nodes
+    navSystem.findShortestPathsFromSource(0);
 
     return 0;
 }
