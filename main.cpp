@@ -183,6 +183,51 @@ public:
             }
         }
     }
+
+        void calculateMST() {
+        // key[i] stores the minimum weight edge to connect node i to the MST
+        vector<int> key(SIZE, INT_MAX);
+        // parent[i] stores the node that connects i to the MST
+        vector<int> parent(SIZE, -1);
+        // inMST[i] tracks if node i is already included in the tree
+        vector<bool> inMST(SIZE, false);
+        
+        // Priority queue to pick the minimum weight edge (dist, node)
+        priority_queue<Pair, vector<Pair>, greater<Pair>> pq;
+
+        // Start with Node 0
+        key[0] = 0;
+        pq.push(make_pair(0, 0));
+
+        while (!pq.empty()) {
+            int u = pq.top().second;
+            pq.pop();
+
+            if (inMST[u]) continue;
+            inMST[u] = true;
+
+            for (auto &neighbor : adjList[u]) {
+                int v = neighbor.first;
+                int weight = neighbor.second;
+
+                if (!inMST[v] && weight < key[v]) {
+                    key[v] = weight;
+                    parent[v] = u;
+                    pq.push(make_pair(key[v], v));
+                }
+            }
+        }
+
+        // Formatted output to match your reference image
+        cout << "\nMinimum Spanning Tree edges:" << endl;
+        for (int i = 0; i < SIZE; i++) {
+            // We skip the root (parent == -1) and any unmapped nodes
+            if (parent[i] != -1 && locationNames.count(i)) {
+                cout << "Edge from " << i << " to " << parent[i] 
+                    << " with capacity: " << key[i] << " units" << endl;
+            }
+        }
+    }
 };
 
 int main() {
@@ -205,6 +250,9 @@ int main() {
 
     // Finally, calculate and display the shortest paths from the charging base (node 0) to all other nodes
     navSystem.findShortestPathsFromSource(0);
+
+    // Calculate and display the Minimum Spanning Tree to show the optimal backbone of our network
+    navSystem.calculateMST();
 
     return 0;
 }
